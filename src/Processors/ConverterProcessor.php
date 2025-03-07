@@ -11,21 +11,24 @@ use MscConverter\Writers\WriterInterface;
 use PDO;
 use RuntimeException;
 
-class ConverterProcessor {
-    
+class ConverterProcessor
+{
+
     private ObserverInterface $events;
     private readonly ReaderInterface $reader;
     private readonly WriterInterface $writer;
 
 
     private readonly PDO $dbh;
-    
-    public function __construct(ReaderInterface $reader, WriterInterface $writer) {
+
+    public function __construct(ReaderInterface $reader, WriterInterface $writer)
+    {
         $this->reader = $reader;
         $this->writer = $writer;
     }
-    
-    public function convert(): void {
+
+    public function convert(): void
+    {
         $this->events->notify(new InfoMessageEvent(sprintf('Iniciando a conversão da MSC em %s', date('d/m/Y, H:i:s'))));
         $query = '
             INSERT INTO "msc" (
@@ -78,15 +81,15 @@ class ConverterProcessor {
         $this->events->notify(new InfoMessageEvent('Processando as linhas da MSC...'));
         $lineno = 1;
         $progress = new ProgressEvent($lineno, $this->reader->getTotalRows());
-        while($line = $this->reader->readRow()){
+        while ($line = $this->reader->readRow()) {
             $progress->current = $lineno;
             $this->events->notify($progress);
             $row = $this->parseRow($line);
             $data = [];
-            foreach ($row as $key => $value){
-                $data[':'.$key] = $value;
+            foreach ($row as $key => $value) {
+                $data[':' . $key] = $value;
             }
-            if($stmt->execute($data) === false){
+            if ($stmt->execute($data) === false) {
                 $this->dbh->rollBack();
                 throw new RuntimeException("Falha ao inserir a linha $lineno na tabela temporária msc.");
             }
@@ -94,14 +97,15 @@ class ConverterProcessor {
         }
         $this->dbh->commit();
         $this->writeData();
-        
+
         $this->events->notify(new InfoMessageEvent(sprintf('Conversão da MSC terminada em %s', date('d/m/Y, H:i:s'))));
     }
-    
-    protected function writeData(): void {
+
+    protected function writeData(): void
+    {
         $this->events->notify(new InfoMessageEvent('Salvando os dados...'));
         $this->writer->prepare($this->reader->remessa);
-        
+
         $query = '
             SELECT
                 "remessa",
@@ -155,9 +159,9 @@ class ConverterProcessor {
                 "subfuncao" ASC,
                 "ano_inscricao_restos_a_pagar" ASC;
         ';
-        
+
         $result = $this->dbh->query($query, PDO::FETCH_ASSOC);
-        if($result === false){
+        if ($result === false) {
             throw new RuntimeException('Falha ao consolidar dados da tabela temporária "msc".');
         }
         /*
@@ -170,35 +174,40 @@ class ConverterProcessor {
         $this->events->notify(new NoticeMessageEvent("Escrevendo $lines registros..."));
         $lineno = 1;
         $progress = new ProgressEvent($lineno, $lines);
-        foreach ($data as $row){
+        foreach ($data as $row) {
             $progress->current = $lineno;
             $this->events->notify($progress);
             $this->writer->storeRow($row);
             $lineno++;
         }
-        
+
         $this->writer->save();
-        
+
     }
 
 
-    protected function prepareTempDb(): void {
-        $this->events->notify(new NoticeMessageEvent('Preparando banco de dados temporário...'));
-        $this->dbh = new PDO("sqlite:./temp/msc.db");
+    protected function prepareTempDb(): void
+    {
+        // $tempDSN = "sqlite:" . __DIR__ . "/temp/msc.db";
+        $tempDSN = "sqlite:" . sys_get_temp_dir() . "/msc.db";
+        $this->events->notify(new NoticeMessageEvent("Preparando banco de dados temporário $tempDSN"));
+        $this->dbh = new PDO($tempDSN);
         $this->createTempTable();
         $this->deleteOldTempData();
-        
+
     }
-    
-    protected function deleteOldTempData(): void {
+
+    protected function deleteOldTempData(): void
+    {
         $this->events->notify(new NoticeMessageEvent('Limpando banco de dados temporário...'));
         $sqlDeleteOldTempData = 'DELETE FROM "msc";';
-        if($this->dbh->exec($sqlDeleteOldTempData) === false){
+        if ($this->dbh->exec($sqlDeleteOldTempData) === false) {
             throw new RuntimeException('Falha ao limpar a tabela temporária "msc".');
         }
     }
-    
-    protected function createTempTable(): void {
+
+    protected function createTempTable(): void
+    {
         $this->events->notify(new NoticeMessageEvent('Criando tabela msc no banco de dados temporário...'));
         $sqlCreateTable = '
             CREATE TABLE IF NOT EXISTS "msc" (
@@ -223,12 +232,13 @@ class ConverterProcessor {
                 "saldo_final"                               REAL
             );
         ';
-        if($this->dbh->exec($sqlCreateTable) === false){
+        if ($this->dbh->exec($sqlCreateTable) === false) {
             throw new RuntimeException('Falha ao criar a tabela temporária "msc".');
         }
     }
-    
-    protected function parseRow(array $data): array {
+
+    protected function parseRow(array $data): array
+    {
         // Este método faz muita coisa, mas vou deixar assim, por enquanto.
         $remessa = $this->reader->remessa;
         $codInstituicaoSiconfi = $this->reader->codInstituicaoSiconfi;
@@ -252,20 +262,20 @@ class ConverterProcessor {
         $movimentoDevedor = 0.0;
         $movimentoCredor = 0.0;
         $saldoFinal = 0.0;
-        
+
         $ic = [
-            [1,2],
-            [3,4],
-            [5,6],
-            [7,8],
-            [9,10],
-            [11,12],
+            [1, 2],
+            [3, 4],
+            [5, 6],
+            [7, 8],
+            [9, 10],
+            [11, 12],
         ];
-        
-        foreach ($ic as $item){
+
+        foreach ($ic as $item) {
             $icValor = $item[0];
             $icTipo = $item[1];
-            switch ($data[$icTipo]){
+            switch ($data[$icTipo]) {
                 case 'PO':
                     $poder = (int) substr($data[$icValor], 0, 2);
                     $orgao = (int) substr($data[$icValor], 2, 3);
@@ -296,62 +306,62 @@ class ConverterProcessor {
                 case 'AI':
                     $anoInscricaoRestosAPagar = (int) $data[$icValor];
                     break;
-                default :
+                default:
                     break;
             }
-            
-            if($tipoValor === 'beginning_balance'){
-                switch ($contaContabil[0]){
+
+            if ($tipoValor === 'beginning_balance') {
+                switch ($contaContabil[0]) {
                     case '1':
                     case '3':
                     case '5':
                     case '7':
-                        if($naturezaValor === 'D'){
+                        if ($naturezaValor === 'D') {
                             $saldoInicial = (float) $valor;
-                        }else{
-                            $saldoInicial = ((float) $valor) *-1;
+                        } else {
+                            $saldoInicial = ((float) $valor) * -1;
                         }
                         break;
                     case '2':
                     case '4':
                     case '6':
                     case '8':
-                        if($naturezaValor === 'C'){
+                        if ($naturezaValor === 'C') {
                             $saldoInicial = (float) $valor;
-                        }else{
-                            $saldoInicial = ((float) $valor) *-1;
+                        } else {
+                            $saldoInicial = ((float) $valor) * -1;
                         }
                         break;
                 }
             }
-            
-            if($tipoValor === 'ending_balance'){
-                switch ($contaContabil[0]){
+
+            if ($tipoValor === 'ending_balance') {
+                switch ($contaContabil[0]) {
                     case '1':
                     case '3':
                     case '5':
                     case '7':
-                        if($naturezaValor === 'D'){
-                            $saldoFinal= (float) $valor;
-                        }else{
-                            $saldoFinal= ((float) $valor) *-1;
-                        }
-                        break;
-                    case '2':
-                    case '4':
-                    case '6':
-                    case '8':
-                        if($naturezaValor === 'C'){
+                        if ($naturezaValor === 'D') {
                             $saldoFinal = (float) $valor;
-                        }else{
-                            $saldoFinal = ((float) $valor) *-1;
+                        } else {
+                            $saldoFinal = ((float) $valor) * -1;
+                        }
+                        break;
+                    case '2':
+                    case '4':
+                    case '6':
+                    case '8':
+                        if ($naturezaValor === 'C') {
+                            $saldoFinal = (float) $valor;
+                        } else {
+                            $saldoFinal = ((float) $valor) * -1;
                         }
                         break;
                 }
             }
-            
-            if($tipoValor === 'period_change'){
-                switch ($naturezaValor){
+
+            if ($tipoValor === 'period_change') {
+                switch ($naturezaValor) {
                     case 'D':
                         $movimentoDevedor = (float) $valor;
                         break;
@@ -361,7 +371,7 @@ class ConverterProcessor {
                 }
             }
         }
-        
+
         return [
             'remessa' => $remessa,
             'cod_instituicao_siconfi' => $codInstituicaoSiconfi,
@@ -384,8 +394,9 @@ class ConverterProcessor {
             'saldo_final' => $saldoFinal,
         ];
     }
-    
-    public function setEventManager(ObserverInterface $events): ConverterProcessor {
+
+    public function setEventManager(ObserverInterface $events): ConverterProcessor
+    {
         $this->events = $events;
         return $this;
     }

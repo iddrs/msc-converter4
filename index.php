@@ -9,7 +9,7 @@ use MscConverter\Observers\Events\ProgressEvent;
 use MscConverter\Processors\ConverterProcessor;
 use MscConverter\UI\Console;
 
-require './vendor/autoload.php';
+require __DIR__ . '/vendor/autoload.php';
 
 $climate = new \League\CLImate\CLImate();
 $climate->arguments->add([
@@ -33,12 +33,12 @@ $climate->arguments->add([
 
 $climate->arguments->parse();
 
-if($climate->arguments->defined('help')){
-    echo file_get_contents('./assets/help.txt');
+if ($climate->arguments->defined('help')) {
+    echo file_get_contents(__DIR__ . '/assets/help.txt');
     exit(0);
 }
 
-if(!$climate->arguments->defined('from') && !$climate->arguments->defined('to')){
+if (!$climate->arguments->defined('from') && !$climate->arguments->defined('to')) {
     echo 'Parâmetros de entrada requeridos não foram definidos. Consulte a ajuda:', PHP_EOL, PHP_EOL;
     echo file_get_contents('./assets/help.txt');
     exit(0);
