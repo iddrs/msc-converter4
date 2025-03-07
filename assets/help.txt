@@ -3,8 +3,13 @@ Convert-Msc
 Converte os dados gerados para envio à MSC para outros formatos.
 
 Uso:
+    Convert-Msc.ps1
     Convert-Msc.ps1 -f|--from <file> -t|--to <file>
     Convert-Msc.ps1 -h|--help
+    Convert-Msc.exe
+    Convert-Msc.exe -f|--from <file> -t|--to <file>
+    Convert-Msc.exe -h|--help
+
 
 Opções:
     -f|--from <file>    Caminho do arquivo com os dados gerados para envio à MSC.
