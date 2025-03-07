@@ -1,0 +1,21 @@
+Convert-Msc
+
+Converte os dados gerados para envio à MSC para outros formatos.
+
+Uso:
+    Convert-Msc.ps1 -f|--from <file> -t|--to <file>
+    Convert-Msc.ps1 -h|--help
+
+Opções:
+    -f|--from <file>    Caminho do arquivo com os dados gerados para envio à MSC.
+    -t|--to <file>      Caminho do arquivo que receberá os dados convertidos.
+    -h|--help           Exibe esta ajuda.
+
+Observações:
+    O conversor irá detectar automaticamente a competência dos dados.
+    Quaisquer dados existentes no arquivo de destino, para a competência que 
+    está sendo processada serão excluídos.
+
+Formatos suportados:
+    -f|--from:  Arquivos CSV (*.csv)
+    -t|--to:    SQLite (*.db)

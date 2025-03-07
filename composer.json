@@ -1,0 +1,22 @@
+{
+    "name": "everton/msc-converter4",
+    "autoload": {
+        "psr-4": {
+            "Everton\\MscConverter4\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Everton da Rosa",
+            "email": "everton3x@gmail.com"
+        }
+    ],
+    "require": {
+        "league/climate": "^3.10"
+    },
+    "autoload": {
+        "psr-4": {
+            "MscConverter\\": "src"
+        }
+    }
+}
